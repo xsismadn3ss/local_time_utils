@@ -1,3 +1,6 @@
+//// This module provides functions for working with time, 
+//// including getting the current time and describing it as a string.
+
 import gleam/float
 import gleam/time/timestamp
 import types.{describe_number}

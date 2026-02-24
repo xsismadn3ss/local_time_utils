@@ -1,3 +1,6 @@
+//// This module defines a custom type `Number` that can represent 
+//// either an integer or a float.
+
 import gleam/float
 import gleam/int
 
