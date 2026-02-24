@@ -1,4 +1,4 @@
-import conversions
+import gleam/float
 import gleam/time/timestamp
 import types.{describe_number}
 
@@ -24,13 +24,13 @@ pub fn now(utc_offset utc_offset: Int) {
 
   LocalTime(
     hour: types.Float(unix_seconds)
-      |> conversions.unix_seconds_to_hours
+      |> unix_seconds_to_hours
       |> fn(hour) { hour + utc_offset }
-      |> conversions.adjust_hour_offset,
-    minute: types.Float(unix_seconds) |> conversions.unix_seconds_to_minutes,
-    second: types.Float(unix_seconds) |> conversions.unix_seconds_to_seconds,
+      |> adjust_hour_offset,
+    minute: types.Float(unix_seconds) |> unix_seconds_to_minutes,
+    second: types.Float(unix_seconds) |> unix_seconds_to_seconds,
     millisecond: types.Float(unix_seconds)
-      |> conversions.unix_seconds_to_milliseconds,
+      |> unix_seconds_to_milliseconds,
   )
 }
 
@@ -43,17 +43,17 @@ pub fn precise_now(utc_offset utc_offset: Int) {
 
   PreciseTime(
     hour: types.Int(unix_seconds)
-      |> conversions.unix_seconds_to_hours
+      |> unix_seconds_to_hours
       |> fn(hour) { hour + utc_offset }
-      |> conversions.adjust_hour_offset,
-    minute: types.Int(unix_seconds) |> conversions.unix_seconds_to_minutes,
-    second: types.Int(unix_seconds) |> conversions.unix_seconds_to_seconds,
+      |> adjust_hour_offset,
+    minute: types.Int(unix_seconds) |> unix_seconds_to_minutes,
+    second: types.Int(unix_seconds) |> unix_seconds_to_seconds,
     millisecond: types.Int(unix_seconds)
-      |> conversions.unix_seconds_to_milliseconds,
+      |> unix_seconds_to_milliseconds,
     microsecond: nanoseconds
-      |> conversions.unix_nanoseconds_to_microseconds,
+      |> unix_nanoseconds_to_microseconds,
     nanosecond: nanoseconds
-      |> conversions.unix_nanoseconds_to_nanoseconds,
+      |> unix_nanoseconds_to_nanoseconds,
   )
 }
 
@@ -75,5 +75,61 @@ pub fn describe_time(time: Time) {
       <> microsecond |> types.Int |> describe_number
       <> "."
       <> nanosecond |> types.Int |> describe_number
+  }
+}
+
+// Helper functions to convert unix time to various components.
+
+fn unix_nanoseconds_to_nanoseconds(unix_nanoseconds: Int) -> Int {
+  unix_nanoseconds / 1_000_000_000
+}
+
+fn unix_nanoseconds_to_microseconds(unix_nanoseconds: Int) -> Int {
+  unix_nanoseconds % 1000
+}
+
+/// Converts unix seconds to milliseconds
+fn unix_seconds_to_milliseconds(unix_seconds: types.Number) -> Int {
+  case unix_seconds {
+    types.Int(_) -> 0
+    types.Float(f) -> {
+      let whole = float.floor(f)
+      let frac = f -. whole
+      float.round(frac *. 1000.0)
+    }
+  }
+}
+
+/// Converts unix seconds to seconds
+fn unix_seconds_to_seconds(unix_seconds: types.Number) -> Int {
+  case unix_seconds {
+    types.Int(i) -> i % 60
+    types.Float(f) -> float.round(f) % 60
+  }
+}
+
+/// Converts unix seconds to minutes
+fn unix_seconds_to_minutes(unix_seconds: types.Number) -> Int {
+  case unix_seconds {
+    types.Int(i) -> { i / 60 } % 60
+    types.Float(f) -> { float.round(f) / 60 } % 60
+  }
+}
+
+/// Converts unix seconds to hours
+fn unix_seconds_to_hours(unix_seconds: types.Number) -> Int {
+  case unix_seconds {
+    types.Int(i) -> { i / 3600 } % 24
+    types.Float(f) -> { float.round(f) / 3600 } % 24
+  }
+}
+
+/// Adjusts the hour offset to ensure it stays within the 0-23 range.
+fn adjust_hour_offset(hours: Int) -> Int {
+  case hours {
+    hours if hours > 23 -> {
+      hours - 24
+    }
+    _ -> hours
   }
 }
